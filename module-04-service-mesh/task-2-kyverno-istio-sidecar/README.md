@@ -12,6 +12,11 @@ re-invokes only webhooks that already ran, and re-checks their selectors.
 `zz-istio-sidecar-injector-after-kyverno` sorts after Kyverno and calls the same istiod
 endpoint. istiod writes its `caBundle` itself.
 
+Kyverno does not order policies, so `student-istio-sidecar` may run before `add-person-label`
+and see no `person` label yet. It therefore also matches pods in namespaces labelled
+`person: student` (set by the course-policies chart); those pods always end up with
+`person: student`. Without this, about 1 pod in 8 got no sidecar.
+
 Chain at pod creation:
 
 1. Kyverno `add-person-label` → `person: student` (student namespaces).
