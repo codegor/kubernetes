@@ -39,7 +39,7 @@ data:
                 model:
                   refId: A
                   queryType: instant
-                  expr: 'sum(count_over_time({job="loki.source.kubernetes_events"} |= "require-readonly-root-filesystem" |= "fail" [5m]))'
+                  expr: 'sum(count_over_time({job="loki.source.kubernetes_events"} |= "require-readonly-root-filesystem" |= "fail" != "kind=ClusterPolicy" [5m]))'
               - refId: B
                 datasourceUid: __expr__
                 model:

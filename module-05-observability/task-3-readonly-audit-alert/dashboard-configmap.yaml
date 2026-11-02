@@ -32,7 +32,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum(count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" [$__interval]))"
+              "expr": "sum(count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\" [$__interval]))"
             }
           ]
         },
@@ -46,7 +46,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "sum by (namespace) (count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" [$__interval]))",
+              "expr": "sum by (namespace) (count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\" [$__interval]))",
               "legendFormat": "{{namespace}}"
             }
           ]
@@ -61,7 +61,7 @@ data:
           "targets": [
             {
               "refId": "A",
-              "expr": "{job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\""
+              "expr": "{job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\""
             }
           ]
         }

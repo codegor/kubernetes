@@ -1,8 +1,10 @@
 # Module 05 · Task 3 — Dashboard and alert: read-only root filesystem audit failures
 
 Kyverno (`require-readonly-root-filesystem`, Audit) records each failure as a Kubernetes Event
-`reason=PolicyViolation` on the pod, message
+`reason=PolicyViolation`, e.g. on the pod:
 `policy require-readonly-root-filesystem/check-readonly-root-filesystem fail: ...`.
+Kyverno writes each failure twice: on the failing object (namespace = the pod's namespace) and on
+the ClusterPolicy; the queries drop the ClusterPolicy copy (`!= "kind=ClusterPolicy"`).
 Alloy ships Events to Loki as a log stream (`job="loki.source.kubernetes_events"`).
 
 | File | What |
@@ -13,7 +15,7 @@ Alloy ships Events to Loki as a log stream (`job="loki.source.kubernetes_events"
 LogQL:
 
 ```logql
-sum(count_over_time({job="loki.source.kubernetes_events"} |= "require-readonly-root-filesystem" |= "fail" [5m])) > 0
+sum(count_over_time({job="loki.source.kubernetes_events"} |= "require-readonly-root-filesystem" |= "fail" != "kind=ClusterPolicy" [5m])) > 0
 ```
 
 ## Check
