@@ -14,11 +14,19 @@ metadata:
 spec:
   rules:
     - name: inject-istio-sidecar
+      # Kyverno does not order policies: when this one runs before add-person-label the pod
+      # has no person label yet. Pods in a person=student namespace (label set by the
+      # course-policies chart) always end up with person=student, so match them as well.
       match:
         any:
           - resources:
               kinds: [Pod]
               selector:
+                matchLabels:
+                  person: student
+          - resources:
+              kinds: [Pod]
+              namespaceSelector:
                 matchLabels:
                   person: student
       mutate:
