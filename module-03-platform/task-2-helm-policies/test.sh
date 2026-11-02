@@ -27,8 +27,8 @@ check "failureAction comes from values" \
   eval 'helm template t $CHART --set policies.readonlyRootFilesystem.failureAction=Enforce | grep -q "failureAction: Enforce"'
 check "policies can be switched off" \
   eval '[ "$(count ClusterPolicy --set policies.personLabel.enabled=false)" = 1 ]'
-check "renders person=student on 3 namespaces" eval '[ "$(helm template t $CHART | grep -c "person: \"student\"")" = 3 ]'
-check "renders person=mentor on the mentor namespace" eval 'helm template t $CHART | grep -q "person: \"mentor\""'
+check "renders person=student on 3 namespaces" eval '[ "$(helm template t $CHART -s templates/namespaces.yaml | grep -c "person: \"student\"")" = 3 ]'
+check "renders person=mentor on the mentor namespace" eval 'helm template t $CHART -s templates/namespaces.yaml | grep -q "person: \"mentor\""'
 
 live_rb() { [ "$(kubectl get rolebinding -A -l app.kubernetes.io/part-of=course-policies --no-headers | wc -l)" = 9 ]; }
 check "cluster: 9 RoleBindings from the chart" live_rb
