@@ -1,15 +1,19 @@
 {{- if .Values.createNamespaces }}
-{{- $namespaces := list .Values.mentor.namespace }}
+{{- $person := .Values.policies.personLabel }}
+{{- $namespaces := list (dict "name" .Values.mentor.namespace "person" $person.mentorValue) }}
 {{- range .Values.students }}
-{{- $namespaces = append $namespaces .namespace }}
+{{- $namespaces = append $namespaces (dict "name" .namespace "person" $person.studentValue) }}
 {{- end }}
 {{- range $namespaces }}
 ---
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ . }}
+  name: {{ .name }}
   labels:
     {{- include "course-policies.labels" $ | nindent 4 }}
+    # Same value add-person-label forces on the namespace's pods; policies can select on it
+    # without depending on Kyverno policy order (module-04 student-istio-sidecar does).
+    person: {{ .person | quote }}
 {{- end }}
 {{- end }}

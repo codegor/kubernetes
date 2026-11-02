@@ -27,6 +27,8 @@ check "failureAction comes from values" \
   eval 'helm template t $CHART --set policies.readonlyRootFilesystem.failureAction=Enforce | grep -q "failureAction: Enforce"'
 check "policies can be switched off" \
   eval '[ "$(count ClusterPolicy --set policies.personLabel.enabled=false)" = 1 ]'
+check "renders person=student on 3 namespaces" eval '[ "$(helm template t $CHART | grep -c "person: \"student\"")" = 3 ]'
+check "renders person=mentor on the mentor namespace" eval 'helm template t $CHART | grep -q "person: \"mentor\""'
 
 live_rb() { [ "$(kubectl get rolebinding -A -l app.kubernetes.io/part-of=course-policies --no-headers | wc -l)" = 9 ]; }
 check "cluster: 9 RoleBindings from the chart" live_rb
@@ -34,6 +36,10 @@ for p in require-readonly-root-filesystem add-person-label; do
   check "cluster: ClusterPolicy $p comes from the chart" \
     has_label clusterpolicy/$p "" app.kubernetes.io/part-of course-policies
 done
+for ns in student01 student02 student03; do
+  eventually 240 "cluster: namespace $ns has person=student" has_label namespace/$ns "" person student
+done
+eventually 240 "cluster: namespace mentor has person=mentor" has_label namespace/mentor "" person mentor
 check "cluster: Argo CD app course-policies is Synced/Healthy" app_synced_healthy course-policies
 
 finish
