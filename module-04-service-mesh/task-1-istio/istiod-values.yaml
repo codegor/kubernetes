@@ -6,6 +6,8 @@ sidecarInjectorWebhook:
   reinvocationPolicy: IfNeeded
 
 pilot:
+  # kind has no metrics-server: the HPA stays <unknown> and Argo CD marks istiod Degraded.
+  autoscaleEnabled: false
   resources:
     requests:
       cpu: 100m
