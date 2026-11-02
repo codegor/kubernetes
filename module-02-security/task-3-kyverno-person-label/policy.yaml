@@ -1,0 +1,58 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-person-label
+  annotations:
+    policies.kyverno.io/title: Person label
+    policies.kyverno.io/category: Labels
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Pods in student namespaces get person=student, pods in the mentor namespace
+      get person=mentor (any value set by the user is overwritten). Pods in all
+      other namespaces have the person label removed.
+    # Mutate Pods only: the label is set on the Pod itself, whatever created it.
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  rules:
+    - name: person-student
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [student01, student02, student03]
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              person: student
+
+    - name: person-mentor
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces: [mentor]
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              person: mentor
+
+    - name: remove-person-elsewhere
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces: [student01, student02, student03, mentor]
+      preconditions:
+        all:
+          - key: "{{ request.object.metadata.labels.person || '' }}"
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: remove
+            path: /metadata/labels/person
