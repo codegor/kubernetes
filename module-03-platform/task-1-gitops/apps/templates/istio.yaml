@@ -82,7 +82,7 @@ spec:
     targetRevision: {{ .Values.targetRevision }}
     path: module-04-service-mesh/task-2-kyverno-istio-sidecar
     directory:
-      include: policy.yaml
+      include: "{policy.yaml,injector-after-kyverno.yaml}"
   destination:
     server: https://kubernetes.default.svc
     namespace: default
@@ -92,9 +92,17 @@ spec:
       selfHeal: true
     syncOptions:
       - SkipDryRunOnMissingResource=true
+      - RespectIgnoreDifferences=true
     retry:
       limit: 10
       backoff:
         duration: 15s
         factor: 2
         maxDuration: 5m
+  ignoreDifferences:
+    # istiod writes the caBundle of injector-after-kyverno.yaml at runtime.
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      name: zz-istio-sidecar-injector-after-kyverno
+      jqPathExpressions:
+        - .webhooks[]?.clientConfig.caBundle

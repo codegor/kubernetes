@@ -7,10 +7,8 @@ metadata:
     policies.kyverno.io/category: Service Mesh
     policies.kyverno.io/subject: Pod
     policies.kyverno.io/description: >-
-      Pods labelled person=student get sidecar.istio.io/inject=true, so the Istio
-      injector adds the istio-proxy sidecar. Relies on istiod
-      sidecarInjectorWebhook.reinvocationPolicy=IfNeeded
-      (module-04-service-mesh/task-1-istio/istiod-values.yaml).
+      Pods labelled person=student get sidecar.istio.io/inject=true; the webhook in
+      injector-after-kyverno.yaml then has istiod add the istio-proxy sidecar.
     # The person label is set on the Pod by add-person-label; match Pods only.
     pod-policies.kyverno.io/autogen-controllers: none
 spec:
