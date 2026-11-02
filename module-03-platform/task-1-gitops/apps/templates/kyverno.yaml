@@ -5,6 +5,8 @@ metadata:
   namespace: argocd
   annotations:
     argocd.argoproj.io/sync-wave: "-10"
+    # The chart renders "labels: {}" on some CRDs; a client-side diff keeps the app OutOfSync.
+    argocd.argoproj.io/compare-options: ServerSideDiff=true
 spec:
   project: default
   source:
@@ -22,9 +24,3 @@ spec:
       - CreateNamespace=true
       # Kyverno CRDs are too big for client-side apply annotations.
       - ServerSideApply=true
-  ignoreDifferences:
-    # The chart renders "labels: {}" on some CRDs; server-side apply drops it and the app stays OutOfSync.
-    - group: apiextensions.k8s.io
-      kind: CustomResourceDefinition
-      jsonPointers:
-        - /metadata/labels
