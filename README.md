@@ -13,7 +13,9 @@ Branches are stacked: every module branch starts from the previous one.
 
 ## Tools
 
-`docker`, `kind`, `kubectl`, `helm`, `openssl`.
+`docker`, `kind`, `kubectl`, `helm`, `openssl`. Or only Docker: `toolbox/run.sh` starts a container with all
+of them (kubeconfig kept in `~/.kube-course`), e.g.
+`SUBDIR=module-02-security/task-1-rbac ./toolbox/run.sh ./create-cluster.sh`.
 
 ## Order
 
