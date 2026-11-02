@@ -25,3 +25,12 @@ of them (kubeconfig kept in `~/.kube-course`), e.g.
 4. Module 04, Module 05 — merged into the GitOps repo, Argo CD syncs them.
 
 Every task folder has its own `README.md` with the commands and the check.
+
+## Tests
+
+Every task folder has a `test.sh` that checks the task on the live cluster; `tests/run-all.sh`
+runs them all (or `tests/run-all.sh module-04` for one module) and prints a summary.
+
+```bash
+tests/run-all.sh
+```
