@@ -3,4 +3,4 @@ repoURL: ""
 targetRevision: main
 
 kyverno:
-  chartVersion: "3.4.*"
+  chartVersion: "3.9.*"
