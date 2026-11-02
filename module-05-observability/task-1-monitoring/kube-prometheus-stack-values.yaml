@@ -1,0 +1,38 @@
+grafana:
+  adminPassword: admin
+  additionalDataSources:
+    # uid is referenced by the dashboards and the alert rule in task-2 / task-3.
+    - name: Loki
+      type: loki
+      uid: loki
+      url: http://loki.monitoring.svc:3100
+      access: proxy
+  sidecar:
+    dashboards:
+      enabled: true
+      label: grafana_dashboard
+      labelValue: "1"
+      searchNamespace: ALL
+    alerts:
+      enabled: true
+      label: grafana_alert
+      labelValue: "1"
+      searchNamespace: ALL
+
+prometheus:
+  prometheusSpec:
+    retention: 7d
+    # Pick up ServiceMonitors/PodMonitors from every namespace, not only this release.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+
+# kind runs these on the control plane without reachable metrics endpoints.
+kubeControllerManager:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeProxy:
+  enabled: false

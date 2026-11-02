@@ -7,3 +7,8 @@ kyverno:
 
 istio:
   chartVersion: "1.26.*"
+
+monitoring:
+  kubePrometheusStackVersion: "75.*"
+  lokiVersion: "6.*"
+  alloyVersion: "1.*"
