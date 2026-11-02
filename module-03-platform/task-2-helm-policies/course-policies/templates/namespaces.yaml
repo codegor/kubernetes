@@ -1,0 +1,15 @@
+{{- if .Values.createNamespaces }}
+{{- $namespaces := list .Values.mentor.namespace }}
+{{- range .Values.students }}
+{{- $namespaces = append $namespaces .namespace }}
+{{- end }}
+{{- range $namespaces }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ . }}
+  labels:
+    {{- include "course-policies.labels" $ | nindent 4 }}
+{{- end }}
+{{- end }}
