@@ -1,14 +1,4 @@
 # Sidecar mode (default profile), not ambient.
-#
-# Kyverno adds sidecar.istio.io/inject=true in its own webhook, which runs AFTER Istio's
-# (webhooks run in name order). The API server re-invokes only webhooks that already ran,
-# so Istio must run on every pod: it injects nothing on the first pass (autoInject disabled)
-# and injects on the re-invocation once Kyverno has set the label.
-# module-04-service-mesh/task-2-kyverno-istio-sidecar depends on all three settings.
-sidecarInjectorWebhook:
-  enableNamespacesByDefault: true
-  reinvocationPolicy: IfNeeded
-
 pilot:
   # kind has no metrics-server: the HPA stays <unknown> and Argo CD marks istiod Degraded.
   autoscaleEnabled: false
@@ -19,7 +9,6 @@ pilot:
 
 global:
   proxy:
-    autoInject: disabled
     resources:
       requests:
         cpu: 10m
