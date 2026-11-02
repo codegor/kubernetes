@@ -4,3 +4,6 @@ targetRevision: main
 
 kyverno:
   chartVersion: "3.4.*"
+
+istio:
+  chartVersion: "1.26.*"

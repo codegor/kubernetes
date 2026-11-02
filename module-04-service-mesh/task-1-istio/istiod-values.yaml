@@ -1,0 +1,19 @@
+# Sidecar mode (default profile), not ambient.
+sidecarInjectorWebhook:
+  # Kyverno adds sidecar.istio.io/inject=true in its own mutating webhook. Istio's webhook
+  # usually runs first, so it must be re-invoked after Kyverno changed the pod
+  # (module-04-service-mesh/task-2-kyverno-istio-sidecar depends on this).
+  reinvocationPolicy: IfNeeded
+
+pilot:
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+global:
+  proxy:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi
