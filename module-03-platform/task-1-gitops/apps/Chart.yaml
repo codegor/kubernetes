@@ -1,0 +1,5 @@
+apiVersion: v2
+name: apps
+description: App of apps — every Argo CD Application of the course cluster
+type: application
+version: 0.1.0

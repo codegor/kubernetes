@@ -1,0 +1,28 @@
+mentor:
+  user: mentor
+  namespace: mentor
+
+students:
+  - user: student01
+    namespace: student01
+  - user: student02
+    namespace: student02
+    readOnlyNamespaces: [student01, default]
+  - user: student03
+    namespace: student03
+
+# Built-in ClusterRoles. Do not use admin/cluster-admin here: they allow RBAC changes.
+roles:
+  readWrite: edit
+  readOnly: view
+
+createNamespaces: true
+
+policies:
+  readonlyRootFilesystem:
+    enabled: true
+    failureAction: Audit
+  personLabel:
+    enabled: true
+    studentValue: student
+    mentorValue: mentor

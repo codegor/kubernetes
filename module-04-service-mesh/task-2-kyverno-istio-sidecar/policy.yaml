@@ -1,0 +1,36 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: student-istio-sidecar
+  annotations:
+    policies.kyverno.io/title: Istio sidecar for students
+    policies.kyverno.io/category: Service Mesh
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/description: >-
+      Pods labelled person=student get sidecar.istio.io/inject=true; the webhook in
+      injector-after-kyverno.yaml then has istiod add the istio-proxy sidecar.
+    # The person label is set on the Pod by add-person-label; match Pods only.
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  rules:
+    - name: inject-istio-sidecar
+      # Kyverno does not order policies: when this one runs before add-person-label the pod
+      # has no person label yet. Pods in a person=student namespace (label set by the
+      # course-policies chart) always end up with person=student, so match them as well.
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              selector:
+                matchLabels:
+                  person: student
+          - resources:
+              kinds: [Pod]
+              namespaceSelector:
+                matchLabels:
+                  person: student
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              sidecar.istio.io/inject: "true"
