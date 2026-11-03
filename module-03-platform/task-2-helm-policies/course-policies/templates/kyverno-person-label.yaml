@@ -1,0 +1,63 @@
+{{- with .Values.policies.personLabel }}
+{{- if .enabled }}
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: add-person-label
+  labels:
+    {{- include "course-policies.labels" $ | nindent 4 }}
+  annotations:
+    policies.kyverno.io/title: Person label
+    policies.kyverno.io/category: Labels
+    policies.kyverno.io/subject: Pod
+    pod-policies.kyverno.io/autogen-controllers: none
+spec:
+  rules:
+    - name: person-student
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces:
+                {{- include "course-policies.studentNamespaces" $ | trim | nindent 16 }}
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              person: {{ .studentValue | quote }}
+
+    - name: person-mentor
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+              namespaces:
+                - {{ $.Values.mentor.namespace }}
+      mutate:
+        patchStrategicMerge:
+          metadata:
+            labels:
+              person: {{ .mentorValue | quote }}
+
+    - name: remove-person-elsewhere
+      match:
+        any:
+          - resources:
+              kinds: [Pod]
+      exclude:
+        any:
+          - resources:
+              namespaces:
+                - {{ $.Values.mentor.namespace }}
+                {{- include "course-policies.studentNamespaces" $ | trim | nindent 16 }}
+      preconditions:
+        all:
+          - key: {{ "\"{{ request.object.metadata.labels.person || '' }}\"" }}
+            operator: NotEquals
+            value: ""
+      mutate:
+        patchesJson6902: |-
+          - op: remove
+            path: /metadata/labels/person
+{{- end }}
+{{- end }}
