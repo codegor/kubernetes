@@ -1,0 +1,15 @@
+# Sidecar mode (default profile), not ambient.
+pilot:
+  # kind has no metrics-server: the HPA stays <unknown> and Argo CD marks istiod Degraded.
+  autoscaleEnabled: false
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+
+global:
+  proxy:
+    resources:
+      requests:
+        cpu: 10m
+        memory: 64Mi

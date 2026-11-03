@@ -1,0 +1,69 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-readonly-rootfs-audit
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  readonly-rootfs-audit.json: |
+    {
+      "uid": "readonly-rootfs-audit",
+      "title": "Kyverno — read-only root filesystem audit",
+      "tags": ["course", "kyverno", "security"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        {
+          "id": 1,
+          "type": "stat",
+          "title": "Audit failures (selected range)",
+          "gridPos": { "x": 0, "y": 0, "w": 6, "h": 6 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": { "reduceOptions": { "calcs": ["sum"] }, "colorMode": "background" },
+          "fieldConfig": {
+            "defaults": {
+              "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] }
+            },
+            "overrides": []
+          },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum(count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\" [$__interval]))"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "Audit failures by namespace",
+          "gridPos": { "x": 6, "y": 0, "w": 18, "h": 6 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "fieldConfig": { "defaults": { "custom": { "drawStyle": "bars", "fillOpacity": 60 } }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (namespace) (count_over_time({job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\" [$__interval]))",
+              "legendFormat": "{{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "logs",
+          "title": "Audit failure messages",
+          "gridPos": { "x": 0, "y": 6, "w": 24, "h": 14 },
+          "datasource": { "type": "loki", "uid": "loki" },
+          "options": { "showTime": true, "wrapLogMessage": true, "sortOrder": "Descending" },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "{job=\"loki.source.kubernetes_events\"} |= \"require-readonly-root-filesystem\" |= \"fail\" != \"kind=ClusterPolicy\""
+            }
+          ]
+        }
+      ]
+    }

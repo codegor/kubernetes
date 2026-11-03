@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alert-readonly-rootfs-audit
+  namespace: monitoring
+  labels:
+    grafana_alert: "1"
+data:
+  readonly-rootfs-audit.yaml: |
+    apiVersion: 1
+    groups:
+      - orgId: 1
+        name: kyverno-audit
+        folder: Kyverno
+        interval: 1m
+        rules:
+          - uid: readonly-rootfs-audit-fail
+            title: Read-only root filesystem audit failed
+            condition: C
+            for: 0s
+            noDataState: OK
+            execErrState: Error
+            labels:
+              severity: warning
+              policy: require-readonly-root-filesystem
+            annotations:
+              summary: Kyverno audit found a pod without readOnlyRootFilesystem
+              description: >-
+                {{ $values.B }} PolicyViolation event(s) for require-readonly-root-filesystem
+                in the last 5 minutes. See the "Kyverno — read-only root filesystem audit" dashboard.
+              __dashboardUid__: readonly-rootfs-audit
+              __panelId__: "3"
+            data:
+              - refId: A
+                datasourceUid: loki
+                relativeTimeRange:
+                  from: 300
+                  to: 0
+                model:
+                  refId: A
+                  queryType: instant
+                  expr: 'sum(count_over_time({job="loki.source.kubernetes_events"} |= "require-readonly-root-filesystem" |= "fail" != "kind=ClusterPolicy" [5m]))'
+              - refId: B
+                datasourceUid: __expr__
+                model:
+                  refId: B
+                  type: reduce
+                  expression: A
+                  reducer: last
+                  settings:
+                    mode: replaceNN
+                    replaceWithValue: 0
+              - refId: C
+                datasourceUid: __expr__
+                model:
+                  refId: C
+                  type: threshold
+                  expression: B
+                  conditions:
+                    - evaluator:
+                        type: gt
+                        params: [0]

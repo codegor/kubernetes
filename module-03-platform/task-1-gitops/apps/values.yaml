@@ -1,0 +1,14 @@
+# Set by the root Application (root-app.yaml).
+repoURL: ""
+targetRevision: main
+
+kyverno:
+  chartVersion: "3.9.*"
+
+istio:
+  chartVersion: "1.30.*"
+
+monitoring:
+  kubePrometheusStackVersion: "92.*"
+  lokiVersion: "7.*"
+  alloyVersion: "1.*"

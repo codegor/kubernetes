@@ -1,0 +1,95 @@
+{{- define "apps.monitoringSync" }}
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+{{- end }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kube-prometheus-stack
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "-3"
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: {{ .Values.monitoring.kubePrometheusStackVersion | quote }}
+      helm:
+        valueFiles:
+          - $values/module-05-observability/task-1-monitoring/kube-prometheus-stack-values.yaml
+    - repoURL: {{ .Values.repoURL }}
+      targetRevision: {{ .Values.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+{{- include "apps.monitoringSync" . }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: loki
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: loki
+      targetRevision: {{ .Values.monitoring.lokiVersion | quote }}
+      helm:
+        valueFiles:
+          - $values/module-05-observability/task-1-monitoring/loki-values.yaml
+    - repoURL: {{ .Values.repoURL }}
+      targetRevision: {{ .Values.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+{{- include "apps.monitoringSync" . }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alloy
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://grafana.github.io/helm-charts
+      chart: alloy
+      targetRevision: {{ .Values.monitoring.alloyVersion | quote }}
+      helm:
+        valueFiles:
+          - $values/module-05-observability/task-1-monitoring/alloy-values.yaml
+    - repoURL: {{ .Values.repoURL }}
+      targetRevision: {{ .Values.targetRevision }}
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+{{- include "apps.monitoringSync" . }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana-dashboards
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: {{ .Values.repoURL }}
+    targetRevision: {{ .Values.targetRevision }}
+    path: module-05-observability
+    directory:
+      recurse: true
+      include: "{task-2-node-load-dashboard/*-configmap.yaml,task-3-readonly-audit-alert/*-configmap.yaml}"
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+{{- include "apps.monitoringSync" . }}

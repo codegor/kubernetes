@@ -1,0 +1,41 @@
+# Istio's own injector webhook runs BEFORE Kyverno (webhooks run in configuration-name
+# order), so it never sees the sidecar.istio.io/inject label that policy.yaml adds, and
+# the API server does not re-invoke a webhook whose selector did not match the first time.
+# This extra webhook is named to sort after "kyverno-resource-mutating-webhook-cfg" and
+# calls the same istiod /inject endpoint.
+# istiod fills caBundle itself: it patches webhooks named *sidecar-injector.istio.io in
+# configurations labelled istio.io/rev=default. Argo CD ignores that field
+# (module-03-platform/task-1-gitops/apps/templates/istio.yaml).
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: zz-istio-sidecar-injector-after-kyverno
+  labels:
+    istio.io/rev: default
+webhooks:
+  - name: after-kyverno.sidecar-injector.istio.io
+    clientConfig:
+      service:
+        name: istiod
+        namespace: istio-system
+        path: /inject
+        port: 443
+    rules:
+      - operations: [CREATE]
+        apiGroups: [""]
+        apiVersions: [v1]
+        resources: [pods]
+    namespaceSelector:
+      matchExpressions:
+        - key: istio-injection
+          operator: DoesNotExist
+        - key: istio.io/rev
+          operator: DoesNotExist
+    objectSelector:
+      matchLabels:
+        person: student
+        sidecar.istio.io/inject: "true"
+    sideEffects: None
+    admissionReviewVersions: [v1beta1, v1]
+    failurePolicy: Fail
+    reinvocationPolicy: Never

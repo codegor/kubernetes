@@ -1,0 +1,62 @@
+{{- $root := . }}
+{{- $mentor := .Values.mentor }}
+{{- $roles := .Values.roles }}
+{{- $mentorNamespaces := list $mentor.namespace }}
+{{- range .Values.students }}
+{{- $mentorNamespaces = append $mentorNamespaces .namespace }}
+{{- end }}
+{{- range $mentorNamespaces }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $mentor.user }}-edit
+  namespace: {{ . }}
+  labels:
+    {{- include "course-policies.labels" $root | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $roles.readWrite }}
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: {{ $mentor.user }}
+{{- end }}
+{{- range .Values.students }}
+{{- $student := . }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $student.user }}-edit
+  namespace: {{ $student.namespace }}
+  labels:
+    {{- include "course-policies.labels" $root | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $roles.readWrite }}
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: {{ $student.user }}
+{{- range ($student.readOnlyNamespaces | default list) }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $student.user }}-view
+  namespace: {{ . }}
+  labels:
+    {{- include "course-policies.labels" $root | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $roles.readOnly }}
+subjects:
+  - apiGroup: rbac.authorization.k8s.io
+    kind: User
+    name: {{ $student.user }}
+{{- end }}
+{{- end }}

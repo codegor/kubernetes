@@ -1,0 +1,159 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dashboard-student-node-load
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+data:
+  student-node-load.json: |
+    {
+      "uid": "student-node-load",
+      "title": "Student namespaces — node load",
+      "tags": ["course", "students"],
+      "timezone": "browser",
+      "schemaVersion": 39,
+      "refresh": "30s",
+      "time": { "from": "now-1h", "to": "now" },
+      "templating": {
+        "list": [
+          {
+            "name": "namespace",
+            "label": "Namespace",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": { "query": "label_values(kube_namespace_status_phase{namespace=~\"student.*\"}, namespace)", "refId": "ns" },
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "allValue": "student.*",
+            "current": { "text": "All", "value": "$__all" }
+          },
+          {
+            "name": "node",
+            "label": "Node",
+            "type": "query",
+            "datasource": { "type": "prometheus", "uid": "prometheus" },
+            "query": { "query": "label_values(kube_node_info, node)", "refId": "node" },
+            "refresh": 2,
+            "multi": true,
+            "includeAll": true,
+            "allValue": ".*",
+            "current": { "text": "All", "value": "$__all" }
+          }
+        ]
+      },
+      "panels": [
+        {
+          "id": 1,
+          "type": "timeseries",
+          "title": "CPU usage (cores) by node / namespace",
+          "gridPos": { "x": 0, "y": 0, "w": 12, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "cores" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node, namespace) (\n  sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[5m]))\n  * on (namespace, pod) group_left(node)\n  max by (namespace, pod, node) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})\n)",
+              "legendFormat": "{{node}} / {{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "type": "timeseries",
+          "title": "CPU usage, % of node allocatable",
+          "gridPos": { "x": 12, "y": 0, "w": 12, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0 }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node, namespace) (\n  sum by (namespace, pod) (rate(container_cpu_usage_seconds_total{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"}[5m]))\n  * on (namespace, pod) group_left(node)\n  max by (namespace, pod, node) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})\n)\n/ on (node) group_left\nmax by (node) (kube_node_status_allocatable{resource=\"cpu\"})",
+              "legendFormat": "{{node}} / {{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "type": "timeseries",
+          "title": "Memory working set by node / namespace",
+          "gridPos": { "x": 0, "y": 9, "w": 12, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "bytes" }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node, namespace) (\n  sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"})\n  * on (namespace, pod) group_left(node)\n  max by (namespace, pod, node) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})\n)",
+              "legendFormat": "{{node}} / {{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 4,
+          "type": "timeseries",
+          "title": "Memory, % of node allocatable",
+          "gridPos": { "x": 12, "y": 9, "w": 12, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "fieldConfig": { "defaults": { "unit": "percentunit", "min": 0 }, "overrides": [] },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "sum by (node, namespace) (\n  sum by (namespace, pod) (container_memory_working_set_bytes{namespace=~\"$namespace\", container!=\"\", container!=\"POD\"})\n  * on (namespace, pod) group_left(node)\n  max by (namespace, pod, node) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})\n)\n/ on (node) group_left\nmax by (node) (kube_node_status_allocatable{resource=\"memory\"})",
+              "legendFormat": "{{node}} / {{namespace}}"
+            }
+          ]
+        },
+        {
+          "id": 5,
+          "type": "table",
+          "title": "Requests vs usage per node / namespace",
+          "gridPos": { "x": 0, "y": 18, "w": 16, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "refId": "A", "instant": true, "format": "table",
+              "expr": "sum by (node, namespace) (kube_pod_container_resource_requests{resource=\"cpu\", namespace=~\"$namespace\", node=~\"$node\"})"
+            },
+            {
+              "refId": "B", "instant": true, "format": "table",
+              "expr": "sum by (node, namespace) (kube_pod_container_resource_requests{resource=\"memory\", namespace=~\"$namespace\", node=~\"$node\"})"
+            },
+            {
+              "refId": "C", "instant": true, "format": "table",
+              "expr": "count by (node, namespace) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})"
+            }
+          ],
+          "transformations": [
+            { "id": "merge" },
+            {
+              "id": "organize",
+              "options": {
+                "excludeByName": { "Time": true },
+                "renameByName": { "Value #A": "CPU requests (cores)", "Value #B": "Memory requests", "Value #C": "Pods" }
+              }
+            }
+          ],
+          "fieldConfig": {
+            "defaults": {},
+            "overrides": [
+              { "matcher": { "id": "byName", "options": "Memory requests" }, "properties": [{ "id": "unit", "value": "bytes" }] }
+            ]
+          }
+        },
+        {
+          "id": 6,
+          "type": "timeseries",
+          "title": "Pods per node / namespace",
+          "gridPos": { "x": 16, "y": 18, "w": 8, "h": 9 },
+          "datasource": { "type": "prometheus", "uid": "prometheus" },
+          "targets": [
+            {
+              "refId": "A",
+              "expr": "count by (node, namespace) (kube_pod_info{namespace=~\"$namespace\", node=~\"$node\"})",
+              "legendFormat": "{{node}} / {{namespace}}"
+            }
+          ]
+        }
+      ]
+    }
